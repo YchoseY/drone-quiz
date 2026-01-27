@@ -1,0 +1,650 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>專業操作證屆期換證學科測驗</title>
+    <style>
+        :root {
+            --primary-color: #2c3e50;
+            --accent-color: #3498db;
+            --correct-color: #27ae60;
+            --wrong-color: #c0392b;
+            --bg-color: #f4f7f6;
+            --star-color: #f1c40f;
+            --review-color: #8e44ad;
+            --browse-color: #16a085;
+        }
+        body {
+            font-family: "Microsoft JhengHei", sans-serif;
+            background-color: var(--bg-color);
+            margin: 0; padding: 20px;
+            display: flex; justify-content: center;
+            min-height: 100vh;
+        }
+        .container {
+            width: 100%; max-width: 600px;
+            background: white; border-radius: 15px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+            padding: 25px; display: flex; flex-direction: column;
+            position: relative; overflow: hidden;
+        }
+        
+        .progress-container {
+            position: absolute; top: 0; left: 0; width: 100%; height: 6px; background-color: #eee;
+        }
+        .progress-bar {
+            height: 100%; background-color: var(--accent-color); width: 0%; transition: width 0.3s;
+        }
+
+        h1 { color: var(--primary-color); text-align: center; border-bottom: 2px solid var(--accent-color); padding-bottom: 10px; font-size: 1.5rem; margin-top: 10px; }
+        
+        .welcome-screen { text-align: center; padding: 20px 0; }
+        .mode-btn {
+            display: block; width: 100%; padding: 20px; margin: 15px 0;
+            border: none; border-radius: 12px; font-size: 1.2rem; cursor: pointer;
+            transition: transform 0.2s; font-weight: bold; color: white; text-align: left;
+            position: relative;
+        }
+        .mode-btn span.icon { float: right; font-size: 1.5rem; }
+        
+        .mode-practice { background-color: var(--accent-color); }
+        .mode-exam { background-color: #e67e22; }
+        .mode-review { background-color: var(--review-color); } 
+        .mode-browse { background-color: var(--browse-color); }
+        
+        .mode-btn:hover { transform: scale(1.02); opacity: 0.95; }
+        .mode-desc { font-size: 0.9rem; font-weight: normal; display: block; margin-top: 5px; opacity: 0.9; }
+
+        .stats-bar { display: flex; justify-content: space-between; margin-bottom: 15px; color: #7f8c8d; font-weight: bold; align-items: center; }
+        .timer-badge { background: #e74c3c; color: white; padding: 4px 12px; border-radius: 20px; font-size: 0.9rem; display: none; }
+        
+        .question-header { display: flex; justify-content: space-between; align-items: flex-start; gap: 10px; margin-bottom: 20px; }
+        .question-box { font-size: 1.2rem; font-weight: bold; color: #2c3e50; line-height: 1.5; flex-grow: 1; }
+        
+        .star-btn {
+            background: none; border: none; font-size: 2rem; cursor: pointer; color: #ccc; transition: color 0.2s; padding: 0; line-height: 1;
+        }
+        .star-btn.active { color: var(--star-color); }
+
+        .options-grid { display: flex; flex-direction: column; gap: 12px; }
+        .option-btn {
+            background: white; border: 2px solid #bdc3c7; border-radius: 10px;
+            padding: 15px; text-align: left; font-size: 1rem; cursor: pointer;
+            transition: all 0.2s; color: #34495e; position: relative;
+        }
+        .option-btn:hover { border-color: var(--accent-color); background-color: #ebf5fb; }
+        .option-btn.correct { background-color: #d4efdf; border-color: var(--correct-color); color: var(--correct-color); }
+        .option-btn.wrong { background-color: #fadbd8; border-color: var(--wrong-color); color: var(--wrong-color); }
+        .option-btn.selected { background-color: #ebf5fb; border-color: var(--accent-color); color: var(--primary-color); border-width: 3px; }
+        .option-btn.disabled { pointer-events: none; }
+
+        .next-btn {
+            margin-top: 25px; background-color: var(--accent-color); color: white;
+            border: none; padding: 15px; border-radius: 10px; font-size: 1.1rem;
+            cursor: pointer; width: 100%; display: none;
+        }
+
+        .result-screen { text-align: center; display: none; }
+        .score-circle {
+            width: 150px; height: 150px; background: var(--accent-color); border-radius: 50%;
+            color: white; display: flex; justify-content: center; align-items: center;
+            font-size: 3rem; margin: 0 auto 20px auto; font-weight: bold;
+        }
+        .btn-group { display: flex; gap: 10px; justify-content: center; margin-top: 20px; flex-wrap: wrap; }
+        .action-btn { border: none; padding: 12px 25px; border-radius: 8px; font-size: 1rem; cursor: pointer; color: white; }
+        .btn-restart { background-color: var(--primary-color); }
+        .btn-home { background-color: #95a5a6; }
+        .btn-clear-star { background-color: #e74c3c; }
+        .btn-toggle-all { background-color: var(--browse-color); }
+
+        .review-section { margin-top: 30px; text-align: left; border-top: 2px solid #eee; padding-top: 20px; }
+        .review-tabs { display: flex; gap: 10px; margin-bottom: 15px; border-bottom: 1px solid #ddd; }
+        .tab-btn {
+            padding: 10px 15px; cursor: pointer; border: none; background: none; font-size: 1rem; color: #7f8c8d; border-bottom: 3px solid transparent;
+        }
+        .tab-btn.active { color: var(--accent-color); border-bottom-color: var(--accent-color); font-weight: bold; }
+        
+        .list-screen { display: none; }
+        .list-item { border-bottom: 1px solid #eee; padding: 20px 0; }
+        .list-item:last-child { border-bottom: none; }
+        
+        .list-q-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 10px; }
+        .list-q-text { font-weight: bold; color: #2c3e50; font-size: 1.1rem; line-height: 1.4; flex-grow: 1;}
+        
+        .list-star-btn { font-size: 1.5rem; cursor: pointer; color: #ccc; border: none; background: none; margin-left: 10px; }
+        .list-star-btn.active { color: var(--star-color); }
+
+        .list-opt { margin: 5px 0; padding: 8px; border-radius: 5px; color: #555; transition: all 0.3s; border: 1px solid transparent; }
+        
+        .list-item.revealed .list-opt.is-ans { 
+            background-color: #d4efdf; color: #27ae60; font-weight: bold; border-color: #27ae60;
+        }
+        
+        .toggle-ans-btn {
+            background-color: #f0f0f0; color: #333; border: 1px solid #ccc; 
+            padding: 5px 12px; border-radius: 15px; cursor: pointer; font-size: 0.85rem; margin-top: 5px; transition: 0.2s;
+        }
+        .toggle-ans-btn:hover { background-color: #e0e0e0; }
+        .list-item.revealed .toggle-ans-btn {
+            background-color: #2c3e50; color: white; border-color: #2c3e50;
+        }
+
+        .search-container { margin-bottom: 15px; position: relative; }
+        .search-input { 
+            width: 100%; padding: 12px; border: 2px solid #ddd; border-radius: 8px; font-size: 1rem; box-sizing: border-box; 
+        }
+        .search-input:focus { border-color: var(--accent-color); outline: none; }
+
+        .review-card { background-color: #fff; border: 1px solid #ddd; border-radius: 8px; padding: 15px; margin-bottom: 15px; font-size: 0.95rem; }
+        .review-card.is-star { border-left: 5px solid var(--star-color); }
+        .review-card.is-wrong { border-left: 5px solid var(--wrong-color); }
+        .ans-wrong { color: var(--wrong-color); text-decoration: line-through; margin-right: 10px;}
+        .ans-correct { color: var(--correct-color); font-weight: bold; }
+
+        .footer-info { margin-top: 30px; padding-top: 15px; border-top: 1px solid #eee; text-align: center; font-size: 0.8rem; color: #95a5a6; }
+        .footer-info a { color: var(--accent-color); text-decoration: none; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <div class="progress-container" id="progress-container" style="display:none;">
+        <div class="progress-bar" id="progress-bar"></div>
+    </div>
+
+    <div id="loading-msg" style="text-align:center;">正在載入題庫...</div>
+
+    <div id="welcome-screen" class="welcome-screen" style="display:none;">
+        <h1>專業操作證<br>學科模擬測驗</h1>
+        <p style="color:#7f8c8d; margin-bottom: 20px;">請選擇模式</p>
+        
+        <button class="mode-btn mode-practice" onclick="startQuiz('practice')">
+            <span class="icon">🔰</span>
+            練習模式
+            <span class="mode-desc">即時顯示對錯，適合初學。</span>
+        </button>
+        
+        <button class="mode-btn mode-exam" onclick="startQuiz('exam')">
+            <span class="icon">⏱️</span>
+            模擬考模式
+            <span class="mode-desc">限時60分鐘，交卷後算分。</span>
+        </button>
+
+        <button class="mode-btn mode-review" onclick="openBookmarkScreen()">
+            <span class="icon">⭐</span>
+            複習收藏題目
+            <span class="mode-desc">專注練習您標記的重點題目。</span>
+        </button>
+
+        <button class="mode-btn mode-browse" onclick="openBrowseScreen()">
+            <span class="icon">📖</span>
+            瀏覽所有題庫
+            <span class="mode-desc">顯示所有題目，可當單字卡練習。</span>
+        </button>
+    </div>
+
+    <div id="quiz-interface" style="display:none;">
+        <div class="stats-bar">
+            <span id="progress-text">題目 1 / 40</span>
+            <div id="timer-badge" class="timer-badge">60:00</div>
+        </div>
+        
+        <div class="question-header">
+            <div class="question-box" id="question-text"></div>
+            <button class="star-btn" id="star-btn" onclick="toggleStar()" title="收藏此題">★</button>
+        </div>
+        
+        <div class="options-grid" id="options-container"></div>
+        <button class="next-btn" id="next-btn" onclick="nextQuestion()">下一題</button>
+    </div>
+
+    <div id="result-interface" class="result-screen">
+        <div class="score-circle" id="final-score">0</div>
+        <h2>測驗結束</h2>
+        <p id="result-message"></p>
+        
+        <div class="btn-group">
+            <button class="action-btn btn-restart" onclick="location.reload()">回到首頁</button>
+        </div>
+
+        <div class="review-section" id="review-section" style="display:none;">
+            <div class="review-tabs">
+                <button class="tab-btn active" onclick="switchTab('wrong')">答錯題目 (<span id="wrong-count">0</span>)</button>
+                <button class="tab-btn" onclick="switchTab('star')">收藏題目 (<span id="star-count">0</span>)</button>
+            </div>
+            <div id="review-list"></div>
+        </div>
+    </div>
+
+    <div id="bookmark-screen" class="list-screen">
+        <h1>⭐ 收藏題目清單</h1>
+        <div class="btn-group" style="margin-bottom: 20px;">
+            <button class="action-btn btn-home" onclick="location.reload()">回到首頁</button>
+            <button class="action-btn btn-clear-star" onclick="clearBookmarks()">清空所有收藏</button>
+        </div>
+        <div style="text-align:center; color:#7f8c8d; margin-bottom:10px;">
+            <button class="toggle-ans-btn" id="toggle-star-all-btn" onclick="toggleAllStarAnswers()">👁️ 顯示全部答案</button>
+        </div>
+        <div id="bookmark-list-container" style="text-align: left;"></div>
+    </div>
+
+    <div id="browse-screen" class="list-screen">
+        <h1>📖 完整題庫瀏覽</h1>
+        <div class="search-container">
+            <input type="text" id="search-input" class="search-input" placeholder="🔍 輸入關鍵字搜尋 (例如：罰鍰、年齡...)" oninput="filterBrowseList()">
+        </div>
+        
+        <div class="btn-group" style="margin-bottom: 15px;">
+            <button class="action-btn btn-home" onclick="location.reload()">回到首頁</button>
+            <button class="action-btn btn-toggle-all" id="toggle-all-btn" onclick="toggleAllBrowseAnswers()">顯示全部答案</button>
+        </div>
+
+        <div style="text-align:center; color:#7f8c8d; margin-bottom:10px;">
+            共 <span id="browse-total-count">0</span> 題，顯示中 <span id="browse-show-count">0</span> 題
+        </div>
+        <div id="browse-list-container" style="text-align: left;"></div>
+    </div>
+
+    <div class="footer-info">
+        題庫來源：<a href="https://www.caa.gov.tw/FileAtt.ashx?lang=1&id=29149" target="_blank">專業操作證屆期換證學科測驗題庫【111.7.7更新】</a>
+    </div>
+</div>
+
+<script src="questions.js"></script>
+
+<script>
+    let currentQuestions = [];
+    let currentQuestionIndex = 0;
+    let score = 0;
+    let hasAnswered = false;
+    let userSelection = null;
+    let currentMode = 'practice';
+    let timerInterval;
+    let examTimeLeft = 3600;
+    
+    let wrongAnswersList = [];
+    let starredList = JSON.parse(localStorage.getItem('drone_starred_v1')) || [];
+    let isAllRevealed = false; 
+    let isAllStarRevealed = false; // 收藏頁面的全開狀態
+
+    if (typeof questionBank === 'undefined') {
+        document.getElementById('loading-msg').innerHTML = "<span style='color:red'>錯誤：找不到 questions.js</span>";
+    } else {
+        document.getElementById('loading-msg').style.display = 'none';
+        document.getElementById('welcome-screen').style.display = 'block';
+    }
+
+    // --- 測驗功能 ---
+    function startQuiz(mode) {
+        currentMode = mode;
+        currentQuestions = [...questionBank].sort(() => Math.random() - 0.5).slice(0, 40);
+        currentQuestionIndex = 0;
+        score = 0;
+        wrongAnswersList = [];
+        
+        document.getElementById('welcome-screen').style.display = 'none';
+        document.getElementById('quiz-interface').style.display = 'block';
+        document.getElementById('progress-container').style.display = 'block';
+        
+        if (currentMode === 'exam') {
+            document.getElementById('timer-badge').style.display = 'block';
+            startTimer();
+        } else {
+            document.getElementById('timer-badge').style.display = 'none';
+        }
+        loadQuestion();
+    }
+
+    // --- 瀏覽所有題目功能 ---
+    function openBrowseScreen() {
+        document.getElementById('welcome-screen').style.display = 'none';
+        document.getElementById('browse-screen').style.display = 'block';
+        document.getElementById('browse-total-count').textContent = questionBank.length;
+        renderBrowseList();
+    }
+
+    function renderBrowseList() {
+        const keyword = document.getElementById('search-input').value.toLowerCase();
+        const container = document.getElementById('browse-list-container');
+        container.innerHTML = '';
+
+        const filteredList = questionBank.filter(q => {
+            return q.q.toLowerCase().includes(keyword) || 
+                   q.options.some(opt => opt.toLowerCase().includes(keyword));
+        });
+
+        document.getElementById('browse-show-count').textContent = filteredList.length;
+
+        if (filteredList.length === 0) {
+            container.innerHTML = '<p style="text-align:center;color:#999;padding:20px;">找不到符合的題目。</p>';
+            return;
+        }
+
+        const displayList = filteredList; 
+
+        displayList.forEach(q => {
+            const item = document.createElement('div');
+            item.className = 'list-item';
+            
+            if(isAllRevealed) item.classList.add('revealed');
+            
+            const isStarred = starredList.includes(q.id);
+            
+            let optionsHtml = '';
+            q.options.forEach((opt, idx) => {
+                const isCorrect = (idx === q.a);
+                optionsHtml += `<div class="list-opt ${isCorrect ? 'is-ans' : ''}">${opt}</div>`;
+            });
+
+            item.innerHTML = `
+                <div class="list-q-header">
+                    <div class="list-q-text">${q.id}. ${q.q}</div>
+                    <button class="list-star-btn ${isStarred ? 'active' : ''}" onclick="toggleBrowseStar(${q.id}, this)">${isStarred ? '★' : '☆'}</button>
+                </div>
+                ${optionsHtml}
+                <button class="toggle-ans-btn" onclick="toggleOneAns(this)">👁️ ${isAllRevealed ? '隱藏答案' : '顯示答案'}</button>
+            `;
+            container.appendChild(item);
+        });
+    }
+
+    function toggleOneAns(btn) {
+        const item = btn.closest('.list-item');
+        item.classList.toggle('revealed');
+        const isRevealed = item.classList.contains('revealed');
+        btn.innerHTML = isRevealed ? '🙈 隱藏答案' : '👁️ 顯示答案';
+    }
+
+    function toggleAllBrowseAnswers() {
+        isAllRevealed = !isAllRevealed;
+        const btn = document.getElementById('toggle-all-btn');
+        btn.textContent = isAllRevealed ? '隱藏全部答案' : '顯示全部答案';
+        renderBrowseList();
+    }
+
+    function filterBrowseList() {
+        renderBrowseList();
+    }
+
+    function toggleBrowseStar(id, btn) {
+        const index = starredList.indexOf(id);
+        if (index === -1) {
+            starredList.push(id);
+            btn.classList.add('active');
+            btn.textContent = '★';
+        } else {
+            starredList.splice(index, 1);
+            btn.classList.remove('active');
+            btn.textContent = '☆';
+        }
+        localStorage.setItem('drone_starred_v1', JSON.stringify(starredList));
+    }
+
+    // --- 收藏複習功能 (修改為隱藏答案模式) ---
+    function openBookmarkScreen() {
+        document.getElementById('welcome-screen').style.display = 'none';
+        document.getElementById('bookmark-screen').style.display = 'block';
+        renderBookmarkList();
+    }
+
+    function renderBookmarkList() {
+        const container = document.getElementById('bookmark-list-container');
+        container.innerHTML = '';
+
+        if (starredList.length === 0) {
+            container.innerHTML = '<p style="text-align:center;color:#999;padding:20px;">目前沒有收藏任何題目。<br>在測驗中點擊星星即可加入收藏。</p>';
+            return;
+        }
+
+        const savedQuestions = questionBank.filter(q => starredList.includes(q.id));
+
+        savedQuestions.forEach(q => {
+            const item = document.createElement('div');
+            item.className = 'list-item'; // 預設不顯示答案
+            if(isAllStarRevealed) item.classList.add('revealed');
+            
+            let optionsHtml = '';
+            q.options.forEach((opt, idx) => {
+                const isCorrect = (idx === q.a);
+                optionsHtml += `<div class="list-opt ${isCorrect ? 'is-ans' : ''}">${opt}</div>`;
+            });
+
+            item.innerHTML = `
+                <div class="list-q-header">
+                    <div class="list-q-text">${q.id}. ${q.q}</div>
+                    <button onclick="removeStar(${q.id}, this)" style="border:none;background:none;cursor:pointer;color:#e74c3c;font-size:0.9rem;">🗑️ 移除</button>
+                </div>
+                ${optionsHtml}
+                <button class="toggle-ans-btn" onclick="toggleOneAns(this)">👁️ ${isAllStarRevealed ? '隱藏答案' : '顯示答案'}</button>
+            `;
+            container.appendChild(item);
+        });
+    }
+
+    function toggleAllStarAnswers() {
+        isAllStarRevealed = !isAllStarRevealed;
+        const btn = document.getElementById('toggle-star-all-btn');
+        btn.textContent = isAllStarRevealed ? '🙈 隱藏全部答案' : '👁️ 顯示全部答案';
+        renderBookmarkList();
+    }
+
+    function removeStar(id, btnElement) {
+        const index = starredList.indexOf(id);
+        if (index > -1) {
+            starredList.splice(index, 1);
+            localStorage.setItem('drone_starred_v1', JSON.stringify(starredList));
+            // 重新渲染以保持狀態
+            renderBookmarkList();
+        }
+    }
+
+    function clearBookmarks() {
+        if(confirm("確定要清空所有收藏題目嗎？")) {
+            starredList = [];
+            localStorage.setItem('drone_starred_v1', JSON.stringify(starredList));
+            openBookmarkScreen();
+        }
+    }
+
+    // --- 一般測驗邏輯 ---
+    function loadQuestion() {
+        hasAnswered = false;
+        userSelection = null;
+        const qData = currentQuestions[currentQuestionIndex];
+        
+        document.getElementById('progress-text').textContent = `題目 ${currentQuestionIndex + 1} / ${currentQuestions.length}`;
+        document.getElementById('score-text').textContent = `答對題數: ${score}`;
+        document.getElementById('question-text').textContent = `${qData.id}. ${qData.q}`;
+        
+        const progressPercent = ((currentQuestionIndex) / currentQuestions.length) * 100;
+        document.getElementById('progress-bar').style.width = `${progressPercent}%`;
+
+        updateStarIcon(qData.id);
+
+        const optionsContainer = document.getElementById('options-container');
+        optionsContainer.innerHTML = '';
+        
+        qData.options.forEach((opt, index) => {
+            const btn = document.createElement('div');
+            btn.className = 'option-btn';
+            btn.textContent = opt;
+            btn.onclick = () => handleOptionClick(index, btn, qData);
+            optionsContainer.appendChild(btn);
+        });
+
+        document.getElementById('next-btn').style.display = 'none';
+    }
+
+    function handleOptionClick(selectedIndex, btnElement, qData) {
+        if (currentMode === 'practice' && hasAnswered) return;
+
+        const allBtns = document.querySelectorAll('.option-btn');
+
+        if (currentMode === 'practice') {
+            hasAnswered = true;
+            if (selectedIndex === qData.a) {
+                score += 1;
+                btnElement.classList.add('correct');
+            } else {
+                btnElement.classList.add('wrong');
+                allBtns[qData.a].classList.add('correct');
+                recordWrongAnswer(qData, selectedIndex);
+            }
+            allBtns.forEach(btn => btn.classList.add('disabled'));
+            document.getElementById('score-text').textContent = `答對題數: ${score}`;
+            document.getElementById('next-btn').textContent = (currentQuestionIndex < currentQuestions.length - 1) ? "下一題" : "查看結果";
+            document.getElementById('next-btn').style.display = 'block';
+
+        } else {
+            allBtns.forEach(btn => btn.classList.remove('selected'));
+            btnElement.classList.add('selected');
+            userSelection = selectedIndex;
+            
+            document.getElementById('next-btn').textContent = (currentQuestionIndex < currentQuestions.length - 1) ? "下一題" : "交卷";
+            document.getElementById('next-btn').style.display = 'block';
+        }
+    }
+
+    function nextQuestion() {
+        if (currentMode === 'exam') {
+            const qData = currentQuestions[currentQuestionIndex];
+            if (userSelection === qData.a) {
+                score += 1;
+            } else {
+                recordWrongAnswer(qData, userSelection === null ? -1 : userSelection);
+            }
+        }
+
+        if (currentQuestionIndex < currentQuestions.length - 1) {
+            currentQuestionIndex++;
+            loadQuestion();
+        } else {
+            finishExam();
+        }
+    }
+
+    function recordWrongAnswer(qData, userAnsIndex) {
+        wrongAnswersList.push({
+            id: qData.id,
+            q: qData.q,
+            userAns: userAnsIndex === -1 ? "未作答" : qData.options[userAnsIndex],
+            correctAns: qData.options[qData.a]
+        });
+    }
+
+    function finishExam() {
+        clearInterval(timerInterval);
+        document.getElementById('quiz-interface').style.display = 'none';
+        document.getElementById('result-interface').style.display = 'block';
+        document.getElementById('progress-bar').style.width = '100%';
+
+        const finalScore = Math.round((score / currentQuestions.length) * 100);
+        document.getElementById('final-score').textContent = finalScore;
+
+        let msg = "";
+        if (finalScore === 100) msg = "太強了！完美全對！";
+        else if (finalScore >= 80) msg = "很棒！準備很充分！";
+        else if (finalScore >= 60) msg = "及格了，再接再厲！";
+        else msg = "加油，建議多練習錯題！";
+        document.getElementById('result-message').innerHTML = `${msg}<br>答對 ${score} / ${currentQuestions.length} 題`;
+
+        document.getElementById('wrong-count').textContent = wrongAnswersList.length;
+        document.getElementById('star-count').textContent = starredList.length;
+        
+        document.getElementById('review-section').style.display = 'block';
+        switchTab('wrong');
+    }
+
+    function toggleStar() {
+        const qId = currentQuestions[currentQuestionIndex].id;
+        const index = starredList.indexOf(qId);
+        const btn = document.getElementById('star-btn');
+
+        if (index === -1) {
+            starredList.push(qId);
+            btn.classList.add('active');
+        } else {
+            starredList.splice(index, 1);
+            btn.classList.remove('active');
+        }
+        localStorage.setItem('drone_starred_v1', JSON.stringify(starredList));
+    }
+
+    function updateStarIcon(qId) {
+        const btn = document.getElementById('star-btn');
+        if (starredList.includes(qId)) {
+            btn.classList.add('active');
+            btn.textContent = '★';
+        } else {
+            btn.classList.remove('active');
+            btn.textContent = '☆';
+        }
+    }
+
+    function switchTab(tabName) {
+        document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+        event.target.classList.add('active');
+
+        const listDiv = document.getElementById('review-list');
+        listDiv.innerHTML = '';
+
+        if (tabName === 'wrong') {
+            if(wrongAnswersList.length === 0) {
+                listDiv.innerHTML = '<p style="color:#aaa;text-align:center;">太棒了！本次沒有答錯題目。</p>';
+                return;
+            }
+            wrongAnswersList.forEach(item => {
+                const card = document.createElement('div');
+                card.className = 'review-card is-wrong';
+                card.innerHTML = `
+                    <div style="color:#c0392b;font-size:0.8rem;margin-bottom:5px;">❌ 答錯</div>
+                    <div class="review-q-text">${item.id}. ${item.q}</div>
+                    <div>您的答案：<span class="ans-wrong">${item.userAns}</span></div>
+                    <div>正確答案：<span class="ans-correct">${item.correctAns}</span></div>
+                `;
+                listDiv.appendChild(card);
+            });
+
+        } else if (tabName === 'star') {
+            if(starredList.length === 0) {
+                listDiv.innerHTML = '<p style="color:#aaa;text-align:center;">目前沒有收藏任何題目。</p>';
+                return;
+            }
+            const starredQuestions = questionBank.filter(q => starredList.includes(q.id));
+            starredQuestions.forEach(item => {
+                const card = document.createElement('div');
+                card.className = 'review-card is-star';
+                card.innerHTML = `
+                    <div style="color:#f1c40f;font-size:0.8rem;margin-bottom:5px;">★ 已收藏</div>
+                    <div class="review-q-text">${item.id}. ${item.q}</div>
+                    <div>正確答案：<span class="ans-correct">${item.options[item.a]}</span></div>
+                `;
+                listDiv.appendChild(card);
+            });
+        }
+    }
+
+    function startTimer() {
+        examTimeLeft = 3600;
+        updateTimerDisplay();
+        timerInterval = setInterval(() => {
+            examTimeLeft--;
+            updateTimerDisplay();
+            if (examTimeLeft <= 0) {
+                alert("時間到！自動交卷。");
+                finishExam();
+            }
+        }, 1000);
+    }
+
+    function updateTimerDisplay() {
+        const min = Math.floor(examTimeLeft / 60);
+        const sec = examTimeLeft % 60;
+        document.getElementById('timer-badge').textContent = 
+            `${min.toString().padStart(2, '0')}:${sec.toString().padStart(2, '0')}`;
+    }
+</script>
+
+</body>
+</html>
