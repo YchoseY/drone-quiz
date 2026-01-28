@@ -187,6 +187,7 @@
     <div id="quiz-interface" style="display:none;">
         <div class="stats-bar">
             <span id="progress-text">題目 1 / 40</span>
+            <span id="score-text">答對題數: 0</span>
             <div id="timer-badge" class="timer-badge">60:00</div>
         </div>
         
@@ -266,7 +267,7 @@
     let wrongAnswersList = [];
     let starredList = JSON.parse(localStorage.getItem('drone_starred_v1')) || [];
     let isAllRevealed = false; 
-    let isAllStarRevealed = false; // 收藏頁面的全開狀態
+    let isAllStarRevealed = false; 
 
     if (typeof questionBank === 'undefined') {
         document.getElementById('loading-msg').innerHTML = "<span style='color:red'>錯誤：找不到 questions.js</span>";
@@ -287,11 +288,14 @@
         document.getElementById('quiz-interface').style.display = 'block';
         document.getElementById('progress-container').style.display = 'block';
         
+        // 模式切換邏輯：控制 分數 與 計時器 的顯示
         if (currentMode === 'exam') {
             document.getElementById('timer-badge').style.display = 'block';
+            document.getElementById('score-text').style.display = 'none'; // 模擬考不顯示分數
             startTimer();
         } else {
             document.getElementById('timer-badge').style.display = 'none';
+            document.getElementById('score-text').style.display = 'inline'; // 練習模式顯示分數
         }
         loadQuestion();
     }
@@ -381,7 +385,7 @@
         localStorage.setItem('drone_starred_v1', JSON.stringify(starredList));
     }
 
-    // --- 收藏複習功能 (修改為隱藏答案模式) ---
+    // --- 收藏複習功能 ---
     function openBookmarkScreen() {
         document.getElementById('welcome-screen').style.display = 'none';
         document.getElementById('bookmark-screen').style.display = 'block';
@@ -434,7 +438,6 @@
         if (index > -1) {
             starredList.splice(index, 1);
             localStorage.setItem('drone_starred_v1', JSON.stringify(starredList));
-            // 重新渲染以保持狀態
             renderBookmarkList();
         }
     }
@@ -454,7 +457,11 @@
         const qData = currentQuestions[currentQuestionIndex];
         
         document.getElementById('progress-text').textContent = `題目 ${currentQuestionIndex + 1} / ${currentQuestions.length}`;
-        document.getElementById('score-text').textContent = `答對題數: ${score}`;
+        // 更新分數顯示 (如果在練習模式)
+        if(currentMode !== 'exam') {
+             document.getElementById('score-text').textContent = `答對題數: ${score}`;
+        }
+        
         document.getElementById('question-text').textContent = `${qData.id}. ${qData.q}`;
         
         const progressPercent = ((currentQuestionIndex) / currentQuestions.length) * 100;
